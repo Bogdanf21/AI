@@ -77,17 +77,18 @@ class Lab2Problem:
         return [state1, state2, state3, state4, state5, state6]
 
     def __trace_back(self, parent_map, head):
-        print(parent_map)
         path = []
         while head != (0, 0):
-            #print(head)
+            # print(head)
             path.append(head)
             head = parent_map[head]
-        path=path[::-1]
+        path = path[::-1]
         return path
+
     def bfs(self):
+        print("##### BFS SOLUTION #####")
         queue = [self.initialize(self.m, self.n, self.k)]
-        parent = {(0,0) : (0,0)}
+        parent = {(0, 0): (0, 0)}
         visited = {}
         path = []
         previous_transition = transition = queue[0]
@@ -108,22 +109,44 @@ class Lab2Problem:
                 break
 
             for possible_next_transition in self.possibleMoves(transition):
-                if(self.validate(transition, possible_next_transition)):
+                if self.validate(transition, possible_next_transition):
                     queue.append(possible_next_transition)
                     if (possible_next_transition[0], possible_next_transition[1]) not in parent.keys():
-                        parent[(possible_next_transition[0], possible_next_transition[1])] = (transition[0], transition[1])
+                        parent[(possible_next_transition[0], possible_next_transition[1])] = (
+                            transition[0], transition[1])
 
         if not is_solvable:
             print("No solution found")
 
+    def bkt(self):
+        print("##### BACKTRACKING SOLUTION #####")
+        state = self.initialize(self.m, self.n, self.k)
+        self.__runbkt(state, {}, {})
+
+    def __runbkt(self, state, visited, parent_map):
+        if self.isFinal(state):
+            solution = self.__trace_back(parent_map, (state[0],state[1]))
+            for i in solution:
+                print(i)
+            print("\n")
+            return True
+        else:
+            for possible_next_transition in self.possibleMoves(state):
+                if self.validate(state, possible_next_transition) and \
+                        (possible_next_transition[0], possible_next_transition[1]) not in visited:
+                    visited[(possible_next_transition[0], possible_next_transition[1])] = 1
+                    parent_map[(possible_next_transition[0], possible_next_transition[1])] = (state[0], state[1])
+                    return self.__runbkt(possible_next_transition, visited, parent_map)
 
 
 solver = Lab2Problem(4, 3, 2)
+solver.bkt()
 solver.bfs()
 
-#statee = [8, 5, 8, 4, 2]
-#possible = solver.possibleMoves(statee)
-#print("possible moves:", possible)
+
+# statee = [8, 5, 8, 4, 2]
+# possible = solver.possibleMoves(statee)
+# print("possible moves:", possible)
 # print("valid moves:")
 # for move in possible:
 #     if (solver.validate(statee, move)):
