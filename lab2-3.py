@@ -86,6 +86,7 @@ class Lab2Problem:
         return path
 
     def bfs(self):
+        is_solvable = False
         print("##### BFS SOLUTION #####")
         queue = [self.initialize(self.m, self.n, self.k)]
         parent = {(0, 0): (0, 0)}
@@ -125,7 +126,7 @@ class Lab2Problem:
 
     def __runbkt(self, state, visited, parent_map):
         if self.isFinal(state):
-            solution = self.__trace_back(parent_map, (state[0],state[1]))
+            solution = self.__trace_back(parent_map, (state[0], state[1]))
             for i in solution:
                 print(i)
             print("\n")
@@ -138,11 +139,72 @@ class Lab2Problem:
                     parent_map[(possible_next_transition[0], possible_next_transition[1])] = (state[0], state[1])
                     return self.__runbkt(possible_next_transition, visited, parent_map)
 
+    def __hill_climbing_heuristic(self, state):
+        return abs(state[0] - state[4]) + abs(state[1] - state[4])
 
-solver = Lab2Problem(4, 3, 2)
+    def hillclimb(self):
+        is_solvable = False
+        steps = 0
+        print("##### HillClimb SOLUTION #####")
+        initial_state = self.initialize(self.m, self.n, self.k)
+        queue = [initial_state]
+        parent = {(initial_state[0], initial_state[1]): (initial_state[0], initial_state[1])}
+        parent_heuristic_value = self.__hill_climbing_heuristic(initial_state)
+        visited = {}
+        path = []
+
+        while len(queue) > 0:
+            steps += 1
+            transition = queue.pop(0)
+            parent_heuristic_value = self.__hill_climbing_heuristic(transition)
+
+            if (transition[0], transition[1]) in visited:
+                continue
+
+            path.append((transition[0], transition[1]))
+            visited[(transition[0], transition[1])] = 1
+
+            if self.isFinal(transition):
+                is_solvable = True
+                solution = self.__trace_back(parent, (transition[0], transition[1]))
+                for i in solution:
+                    print(i)
+                print("Steps: ", steps)
+                break
+
+
+            transitions = self.possibleMoves(transition)
+            transitions = list(t for t in transitions if self.__hill_climbing_heuristic(t) <= parent_heuristic_value)
+            transitions.sort(key=self.__hill_climbing_heuristic, reverse=True)
+
+            for possible_next_transition in transitions:
+                if self.validate(transition, possible_next_transition):
+                    queue.append(possible_next_transition)
+                    if (possible_next_transition[0], possible_next_transition[1]) not in parent.keys():
+                        parent[(possible_next_transition[0], possible_next_transition[1])] = (
+                        transition[0], transition[1])
+
+        if not is_solvable:
+            print("No solution found")
+
+
+solver = Lab2Problem(4, 5, 3)
 solver.bkt()
 solver.bfs()
-
+solver.hillclimb()
+# 4
+# 4
+# 3
+# 4
+# 3
+# 3
+# 2
+# 3
+# 4
+# 2
+# 3
+# 3
+# 2
 
 # statee = [8, 5, 8, 4, 2]
 # possible = solver.possibleMoves(statee)
