@@ -1,4 +1,5 @@
 from collections import deque
+from email.policy import default
 
 
 # metoda de ordonare a tranzitiei pt backtracking
@@ -126,7 +127,7 @@ class Lab2Problem:
         queue = deque([self.initialize(self.m, self.n, self.k)])
         parent = {(0, 0): (0, 0)}
         visited = {}
-        path = []
+        
         previous_transition = transition = queue[0]
 
         while len(queue) > 0:
@@ -134,7 +135,7 @@ class Lab2Problem:
             if (transition[0], transition[1]) in visited:
                 continue
 
-            path.append((transition[0], transition[1]))
+            
             visited[(transition[0], transition[1])] = 1
 
             if self.isFinal(transition):
@@ -167,7 +168,7 @@ class Lab2Problem:
         parent = {(initial_state[0], initial_state[1]): (initial_state[0], initial_state[1])}
         parent_heuristic_value = self.__heuristic(initial_state)
         visited = {}
-        path = []
+        
 
         while len(queue) > 0:
             steps += 1
@@ -177,7 +178,7 @@ class Lab2Problem:
             if (transition[0], transition[1]) in visited:
                 continue
 
-            path.append((transition[0], transition[1]))
+            
             visited[(transition[0], transition[1])] = 1
 
             if self.isFinal(transition):
@@ -210,7 +211,7 @@ class Lab2Problem:
         queue = [initial_state]
         parent = {(initial_state[0], initial_state[1]): (initial_state[0], initial_state[1])}
         visited = {}
-        path = []
+        
 
         while len(queue) > 0:
             steps += 1
@@ -220,7 +221,7 @@ class Lab2Problem:
             if (transition[0], transition[1]) in visited:
                 continue
 
-            path.append((transition[0], transition[1]))
+        
             visited[(transition[0], transition[1])] = 1
 
             if self.isFinal(transition):
@@ -243,11 +244,48 @@ class Lab2Problem:
             print("No solution found")
 
 
-solver = Lab2Problem(4, 5, 3)
-solver.bktt()
-solver.bfs()
-solver.hillclimb()
-solver.a_star()
+def menu():
+        
+    continuee = True
+
+    while continuee :
+        m= int(input("Enter m:" ))
+        n= int(input("Enter n:" ))
+        k= int(input("Enter k:" ))
+        
+
+        print("Choose the strategy you want")
+        
+        print("1.bkt")
+        print("2.bfs")
+        print("3.hillclimbing")
+        print("4.A*") 
+    
+        option= int(input("number:" ))
+        
+        solver= Lab2Problem(m,n,k)
+
+        match option:
+            case 1: solver.bktt()
+            case 2: solver.bfs()
+            case 3: solver.hillclimb()
+            case 4: solver.a_star() 
+            
+            case _: print("enter a valid option")
+        
+        var= input("Want to try again?(y/n)")
+
+        if var == 'n' :
+            continuee= False
+    
+
+menu()
+
+# solver = Lab2Problem(4, 5, 3)
+# solver.bktt()
+# solver.bfs()
+# solver.hillclimb()
+# solver.a_star()
 
 # def bkt(self):
 #     print("##### BACKTRACKING SOLUTION #####")
