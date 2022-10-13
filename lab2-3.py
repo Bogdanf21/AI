@@ -1,3 +1,6 @@
+from collections import deque
+
+
 # metoda de ordonare a tranzitiei pt backtracking
 # BFS are nevoie de celelalte stari vizitate -> instanta cat mai mica
 # nu stiu daca are solutii -> m si n au divizor comun k
@@ -91,11 +94,129 @@ class Lab2Problem:
         queue = [self.initialize(self.m, self.n, self.k)]
         parent = {(0, 0): (0, 0)}
         visited = {}
-        path = []
         previous_transition = transition = queue[0]
 
         while len(queue) > 0:
             transition = queue.pop(0)
+            if (transition[0], transition[1]) in visited:
+                continue
+
+            visited[(transition[0], transition[1])] = 1
+
+            if self.isFinal(transition):
+                is_solvable = True
+                solution = self.__trace_back(parent, (transition[0], transition[1]))
+                for i in solution:
+                    print(i)
+                break
+
+            for possible_next_transition in self.possibleMoves(transition):
+                if self.validate(transition, possible_next_transition): #adaug doar tranzitiile valide
+                    queue.append(possible_next_transition)
+                    if (possible_next_transition[0], possible_next_transition[1]) not in parent.keys():
+                        parent[(possible_next_transition[0], possible_next_transition[1])] = (
+                            transition[0], transition[1])
+
+        if not is_solvable:
+            print("No solution found")
+
+    def bktt(self):
+        is_solvable = False
+        print("##### BackTracking SOLUTION #####")
+        queue = deque([self.initialize(self.m, self.n, self.k)])
+        parent = {(0, 0): (0, 0)}
+        visited = {}
+        path = []
+        previous_transition = transition = queue[0]
+
+        while len(queue) > 0:
+            transition = queue.popleft()
+            if (transition[0], transition[1]) in visited:
+                continue
+
+            path.append((transition[0], transition[1]))
+            visited[(transition[0], transition[1])] = 1
+
+            if self.isFinal(transition):
+                is_solvable = True
+                solution = self.__trace_back(parent, (transition[0], transition[1]))
+                for i in solution:
+                    print(i)
+                break
+
+            for possible_next_transition in self.possibleMoves(transition):
+                if self.validate(transition, possible_next_transition):
+                    queue.appendleft(possible_next_transition)
+                    if (possible_next_transition[0], possible_next_transition[1]) not in parent.keys():
+                        parent[(possible_next_transition[0], possible_next_transition[1])] = (
+                            transition[0], transition[1])
+
+        if not is_solvable:
+            print("No solution found")
+
+
+    def __heuristic(self, state):
+        return abs(state[0] - state[4]) + abs(state[1] - state[4])
+
+    def hillclimb(self):
+        is_solvable = False
+        steps = 0
+        print("##### HillClimb SOLUTION #####")
+        initial_state = self.initialize(self.m, self.n, self.k)
+        queue = [initial_state]
+        parent = {(initial_state[0], initial_state[1]): (initial_state[0], initial_state[1])}
+        parent_heuristic_value = self.__heuristic(initial_state)
+        visited = {}
+        path = []
+
+        while len(queue) > 0:
+            steps += 1
+            transition = queue.pop(0)
+            parent_heuristic_value = self.__heuristic(transition)
+
+            if (transition[0], transition[1]) in visited:
+                continue
+
+            path.append((transition[0], transition[1]))
+            visited[(transition[0], transition[1])] = 1
+
+            if self.isFinal(transition):
+                is_solvable = True
+                solution = self.__trace_back(parent, (transition[0], transition[1]))
+                for i in solution:
+                    print(i)
+                print("Steps: ", steps)
+                break
+
+            transitions = self.possibleMoves(transition)
+            transitions = list(t for t in transitions if self.__heuristic(t) <= parent_heuristic_value)
+            transitions.sort(key=self.__heuristic, reverse=True)
+
+            for possible_next_transition in transitions:
+                if self.validate(transition, possible_next_transition):
+                    queue.append(possible_next_transition)
+                    if (possible_next_transition[0], possible_next_transition[1]) not in parent.keys():
+                        parent[(possible_next_transition[0], possible_next_transition[1])] = (
+                            transition[0], transition[1])
+
+        if not is_solvable:
+            print("No solution found")
+
+    def a_star(self):
+        steps = 0
+        is_solvable = False
+        print("##### A* SOLUTION #####")
+        initial_state = self.initialize(self.m, self.n, self.k)
+        queue = [initial_state]
+        parent = {(initial_state[0], initial_state[1]): (initial_state[0], initial_state[1])}
+        visited = {}
+        path = []
+
+        while len(queue) > 0:
+            steps += 1
+            transition = queue.pop(0)
+            parent_heuristic_value = self.__heuristic(transition)
+
             if (transition[0], transition[1]) in visited:
                 continue
 
@@ -116,95 +237,38 @@ class Lab2Problem:
                         parent[(possible_next_transition[0], possible_next_transition[1])] = (
                             transition[0], transition[1])
 
-        if not is_solvable:
-            print("No solution found")
-
-    def bkt(self):
-        print("##### BACKTRACKING SOLUTION #####")
-        state = self.initialize(self.m, self.n, self.k)
-        self.__runbkt(state, {}, {})
-
-    def __runbkt(self, state, visited, parent_map):
-        if self.isFinal(state):
-            solution = self.__trace_back(parent_map, (state[0], state[1]))
-            for i in solution:
-                print(i)
-            print("\n")
-            return True
-        else:
-            for possible_next_transition in self.possibleMoves(state):
-                if self.validate(state, possible_next_transition) and \
-                        (possible_next_transition[0], possible_next_transition[1]) not in visited:
-                    visited[(possible_next_transition[0], possible_next_transition[1])] = 1
-                    parent_map[(possible_next_transition[0], possible_next_transition[1])] = (state[0], state[1])
-                    return self.__runbkt(possible_next_transition, visited, parent_map)
-
-    def __hill_climbing_heuristic(self, state):
-        return abs(state[0] - state[4]) + abs(state[1] - state[4])
-
-    def hillclimb(self):
-        is_solvable = False
-        steps = 0
-        print("##### HillClimb SOLUTION #####")
-        initial_state = self.initialize(self.m, self.n, self.k)
-        queue = [initial_state]
-        parent = {(initial_state[0], initial_state[1]): (initial_state[0], initial_state[1])}
-        parent_heuristic_value = self.__hill_climbing_heuristic(initial_state)
-        visited = {}
-        path = []
-
-        while len(queue) > 0:
-            steps += 1
-            transition = queue.pop(0)
-            parent_heuristic_value = self.__hill_climbing_heuristic(transition)
-
-            if (transition[0], transition[1]) in visited:
-                continue
-
-            path.append((transition[0], transition[1]))
-            visited[(transition[0], transition[1])] = 1
-
-            if self.isFinal(transition):
-                is_solvable = True
-                solution = self.__trace_back(parent, (transition[0], transition[1]))
-                for i in solution:
-                    print(i)
-                print("Steps: ", steps)
-                break
-
-
-            transitions = self.possibleMoves(transition)
-            transitions = list(t for t in transitions if self.__hill_climbing_heuristic(t) <= parent_heuristic_value)
-            transitions.sort(key=self.__hill_climbing_heuristic, reverse=True)
-
-            for possible_next_transition in transitions:
-                if self.validate(transition, possible_next_transition):
-                    queue.append(possible_next_transition)
-                    if (possible_next_transition[0], possible_next_transition[1]) not in parent.keys():
-                        parent[(possible_next_transition[0], possible_next_transition[1])] = (
-                        transition[0], transition[1])
+            queue.sort(key=self.__heuristic, reverse=True)
 
         if not is_solvable:
             print("No solution found")
 
 
 solver = Lab2Problem(4, 5, 3)
-solver.bkt()
+solver.bktt()
 solver.bfs()
 solver.hillclimb()
-# 4
-# 4
-# 3
-# 4
-# 3
-# 3
-# 2
-# 3
-# 4
-# 2
-# 3
-# 3
-# 2
+solver.a_star()
+
+# def bkt(self):
+#     print("##### BACKTRACKING SOLUTION #####")
+#     state = self.initialize(self.m, self.n, self.k)
+#     self.__runbkt(state, {}, {})
+#
+#
+# def __runbkt(self, state, visited, parent_map):
+#     if self.isFinal(state):
+#         solution = self.__trace_back(parent_map, (state[0], state[1]))
+#         for i in solution:
+#             print(i)
+#         print("\n")
+#         return True
+#     else:
+#         for possible_next_transition in self.possibleMoves(state):
+#             if self.validate(state, possible_next_transition) and \
+#                     (possible_next_transition[0], possible_next_transition[1]) not in visited:
+#                 visited[(possible_next_transition[0], possible_next_transition[1])] = 1
+#                 parent_map[(possible_next_transition[0], possible_next_transition[1])] = (state[0], state[1])
+#                 return self.__runbkt(possible_next_transition, visited, parent_map)
 
 # statee = [8, 5, 8, 4, 2]
 # possible = solver.possibleMoves(statee)
