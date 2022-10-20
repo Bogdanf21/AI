@@ -178,7 +178,7 @@ class Lab2Problem:
     def __a_star_heuristic(self, state):
         if abs(state[0] - state[4]) + abs(state[1] - state[4]) == 0:
             return sys.maxsize
-        return abs(state[0] - state[4]) + abs(state[1] - state[4])
+        return 1 / abs(state[0] - state[4]) + abs(state[1] - state[4])
 
     def hillclimb(self):
         is_solvable = False
