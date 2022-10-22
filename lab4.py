@@ -1,6 +1,8 @@
 # 4 1 2 0 3
+from collections import deque
 
-# Reprezentarea pentru regine : 
+
+# Reprezentarea pentru regine :
 # daca exista regina pe casuta cu coordonatele (X,Y) in vector v[X-1] = Y-1, -1 gol
 
 # ([regine],[blocaje])
@@ -18,15 +20,33 @@ def init_state(n, blocks):
 # functioneaza pentru ca putem avea o singura regina pe linie
 # blocks va fi vector de tuple, avand structura (X-1,Y-1) unde un blocaj 
 
-def is_final(state):
+def has_all_queens_placed(state):
     for element in state[0]:
         if element == -1:
             return False
     return True
 
 
+def intersects_with_queen(possible_queen, queen):
+    possible_x = possible_queen[0]
+    possible_y = possible_queen[1]
+    x = queen[0]
+    y = queen[1]
 
-def possible_values(state, x):
+    if x == possible_x or y == possible_y or \
+            x - y == possible_x - possible_y or x + y == possible_x + possible_y:
+        return True
+    return False
+
+
+def intersects_with_any_queen(possible_queen, queens):
+    for x in range(len(queens)):
+        if queens[x] != -1 and intersects_with_queen(possible_queen, [x, queens[x]]):
+            return True
+    return False
+
+
+def domain_of(state, x):
     n = len(state[0])
     queens = state[0]
     if queens[x] != -1:  # daca exista deja o regina pe acea linie
@@ -35,27 +55,52 @@ def possible_values(state, x):
     # toate coloanele pe care se poate pune ceva
     domain = list(i for i in range(n))
 
-    # sa nu existe blocaj pe coloana
-    for possible_occupied_Y in queens:
-        if possible_occupied_Y in domain:
-            domain.remove(possible_occupied_Y)
+    # filtrare
+    domain = list(y for y in domain if not intersects_with_any_queen([x, y], queens))
 
-    # sa nu existe blocaj pe diagonale
-    placed_queens = []
-    for i in range(n):
-        if queens[i] != -1:
-            placed_queens.append((i, queens[i]))
+    # # sa nu existe regine pe coloana
+    # for possible_occupied_Y in queens:
+    #     if possible_occupied_Y in domain:
+    #         domain.remove(possible_occupied_Y)
+    #
+    # # sa nu existe regine pe diagonale
+    # placed_queens = []
+    # for i in range(n):
+    #     if queens[i] != -1:
+    #         placed_queens.append((i, queens[i]))
+    # domain = list(y for y in domain if not intersects_with_any_queen_on_diagonal(placed_queens, x, y))
 
-    for possible_Y in domain:
-        for queen in placed_queens:
-            if abs(queen[0] - queen[1]) == abs(x - possible_Y):
-                domain.remove(possible_Y)
+    # sa nu existe blocaje
+    domain = list(y for y in domain if [x, y] not in state[1])
+
     return domain
+
+
+def intersects_with_any_queen_on_diagonal(placed_queens, x, y):
+    for queen in placed_queens:
+        if queen[0] - queen[1] == x - y or queen[0] + queen[1] == x + y:
+            return True
+    return False
+
+
+def possible_moves(state):
+    next_states = []
+    for x in range(len(state[0])):
+        domain_of_x = domain_of(state, x)
+        for y in domain_of_x:
+            new_state = transition(state.copy(), x, y)
+            next_states.append(new_state)
+
+    return possible_moves
+
 
 def transition(state, x, y):
     if state[0][x] != -1:
         print("Fatal error: there already is a piece on line X:", x)
-    state[0][x] = y
+    queens = state[0].copy()
+    queens[x] = y
+    return (queens, state[1])
+
 
 def readValues():
     print("hello")
@@ -67,25 +112,33 @@ def readValues():
     return n, tuples
 
 
+def forward_check(state, x):
+    if x == len(state[0]):
+        if has_all_queens_placed(state):
+            print(state[0])
+        else:
+            return
+    else:
+        for y in domain_of(state, x):
+            new_state = transition(state, x, y)
+            forward_check(new_state, x + 1)
+
+
 def main():
-
     n = 8
-    tuples = [[1, 7], [2, 5], [6, 4]]
+    blocks = [[1, 1], [2, 2], [4, 3]]
 
-    state = init_state(8, tuples)
-    # queen at 1,6 4,2 2,8
-    state[0][0] = 5
-    state[0][3] = 1
-    state[0][1] = 7
+    state = init_state(4, blocks)
 
-    possible = possible_values(state, 5+1)
-    possible = list(i+1 for i in possible)
-    print(possible)
+    forward_check(state, 0)
+    # state[0][0] = 5
+    # state[0][1] = 7
+    # state[0][3] = 1
+    # for i in range(n):
+    #     print(possible_values(state, i))
+
 
 main()
-
-
-
 
 # def validate(state, coord_tuple):
 #     n = len(state[0])
@@ -112,4 +165,3 @@ main()
 #     if (pieceX, pieceY) in state[1]:
 #         return False
 #     return True
-
