@@ -58,29 +58,10 @@ def domain_of(state, x):
     # filtrare
     domain = list(y for y in domain if not intersects_with_any_queen([x, y], queens))
 
-    # # sa nu existe regine pe coloana
-    # for possible_occupied_Y in queens:
-    #     if possible_occupied_Y in domain:
-    #         domain.remove(possible_occupied_Y)
-    #
-    # # sa nu existe regine pe diagonale
-    # placed_queens = []
-    # for i in range(n):
-    #     if queens[i] != -1:
-    #         placed_queens.append((i, queens[i]))
-    # domain = list(y for y in domain if not intersects_with_any_queen_on_diagonal(placed_queens, x, y))
-
     # sa nu existe blocaje
     domain = list(y for y in domain if [x, y] not in state[1])
 
     return domain
-
-
-def intersects_with_any_queen_on_diagonal(placed_queens, x, y):
-    for queen in placed_queens:
-        if queen[0] - queen[1] == x - y or queen[0] + queen[1] == x + y:
-            return True
-    return False
 
 
 def possible_moves(state):
@@ -105,32 +86,81 @@ def transition(state, x, y):
 def readValues():
     print("hello")
     n = int(input("n = "))
-    blocksInString = str(input("coords for blocks separated by space \n"))
+    blocksInString = str(input("coords for blocks separated by space: \n"))
     tuples = blocksInString.split(" ")
     tuples = list(a for a in tuples if len(a) > 0)
     tuples = list([int(a.split(',')[0]), int(a.split(',')[1])] for a in tuples)
     return n, tuples
 
 
-def forward_check(state, x):
-    if x == len(state[0]):
-        if has_all_queens_placed(state):
-            print(state[0])
-        else:
-            return
-    else:
-        for y in domain_of(state, x):
-            new_state = transition(state, x, y)
-            forward_check(new_state, x + 1)
+def fwd_check(n, blocks):
+    state = init_state(n, blocks)
+    forward_check(state, 0, domain_of(state, 0))
 
+
+def forward_check(state, x, domain_of_x):
+    for y in domain_of_x:
+        possible_queen = [x, y]
+        new_state = transition(state, x, y)
+        if x == len(state[0]) - 1:
+            if has_all_queens_placed(new_state):
+                print_solution(new_state[0])
+            continue
+
+        # vad daca voi pune o regina pe x, y daca domeniul este nul pentru x+1. Daca este nu mai parcurg
+        domain_of_next_x = list(forward_y for forward_y in domain_of(state, x + 1) if
+                                not intersects_with_queen(possible_queen, [x + 1, forward_y]))
+        if len(domain_of_next_x) > 0:
+            forward_check(new_state, x + 1, domain_of_next_x)
+
+
+def mrv(state, x, domain_of_x):
+    next_states = []
+    for y in domain_of_x:
+        possible_queen = [x, y]
+        new_state = transition(state, x, y)
+        # vad daca am pus toate reginele, printez daca e o solutie viabila
+        if x == len(state[0]) - 1:
+            if has_all_queens_placed(new_state):
+                print_solution(new_state[0])
+            continue
+
+        # vad daca voi pune o regina pe x, y daca domeniul este nul pentru x+1. Daca nu este, il adaug in lista
+        domain_of_next_x = list(forward_y for forward_y in domain_of(state, x + 1) if
+                                not intersects_with_queen(possible_queen, [x + 1, forward_y]))
+
+        if len(domain_of_next_x) > 0:
+            next_states.append([new_state, domain_of_next_x])
+
+    if len(next_states):
+        # sortam lista si alegem doar tranzitia cu cel mai mic domeniu.
+        # In cazul special in care exista mai multe minime, le vom pargurge pe ambele
+        next_states.sort(key=lambda i: len(i[1]))
+        lowest_domain_count = len(next_states[0][1])
+        next_states = list(next_state for next_state in next_states if len(next_state[1]) == lowest_domain_count)
+        for next_state in next_states:
+            lowest_values_left_transition = next_state[0]
+            lowest_values_left_transition_domain = next_state[1]
+            mrv(lowest_values_left_transition, x + 1, lowest_values_left_transition_domain)
+
+def print_solution(queens):
+    solution = []
+    for i in range(len(queens)):
+        solution.append((i+1, queens[i] + 1))
+    print(solution)
 
 def main():
-    n = 8
-    blocks = [[1, 1], [2, 2], [4, 3]]
+    # n = 4
+    # blocks = [[1, 1], [2, 2], [4, 3]]
+    n, blocks = readValues()
+    state = init_state(n, blocks)
+    # Forward check
+    print("Forward check solution: ")
+    forward_check(state, 0, domain_of(state, 0))
+    # MRV
+    print("MRV:")
+    mrv(state, 0, domain_of(state, 0))
 
-    state = init_state(4, blocks)
-
-    forward_check(state, 0)
     # state[0][0] = 5
     # state[0][1] = 7
     # state[0][3] = 1
