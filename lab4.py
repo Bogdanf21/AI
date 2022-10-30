@@ -169,29 +169,3 @@ def main():
 
 
 main()
-
-# def validate(state, coord_tuple):
-#     n = len(state[0])
-#     queens = state[0]
-#     pieceX = coord_tuple[0]
-#     pieceY = coord_tuple[1]
-#     # daca exista pe linia X
-#     if queens[pieceX] != -1:
-#         return False
-#     # daca exista pe coloana Y
-#     for value in queens:
-#         if value == pieceY:
-#             return False
-#             # daca exista pe diagonale
-#     placed_queens = []
-#     for i in range(n):
-#         if queens[i] != -1:
-#             placed_queens.append((i, queens[i]))
-#     abs_value = abs(pieceX - pieceY)
-#     for queen in placed_queens:
-#         if abs(queen[0] - queen[1]) == abs_value:
-#             return False
-#     # daca pui pe blocaj
-#     if (pieceX, pieceY) in state[1]:
-#         return False
-#     return True
